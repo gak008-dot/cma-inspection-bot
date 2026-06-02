@@ -1,0 +1,7 @@
+.env
+venv/
+__pycache__/
+pdf_pages/
+question_page_map.json
+*.pyc
+.DS_Store
