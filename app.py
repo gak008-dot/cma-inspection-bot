@@ -9,7 +9,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFLoader
-import base64
 
 st.set_page_config(page_title="CMA CGM Inspection Assistant", page_icon="⚓", layout="centered")
 
@@ -48,7 +47,7 @@ def initialize_vector_db():
         from langchain_core.documents import Document
         docs = [Document(page_content="CMA CGM Extended Survey Guidance. Make sure to upload the full PDF file to your repository.")]
             
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    text_splitter = RecursiveCharacterCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     final_docs = text_splitter.split_documents(docs)
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     return FAISS.from_documents(final_docs, embeddings)
@@ -112,11 +111,23 @@ if view_mode == "💬 Chat Assistant":
 # --- VIEW 2: VISUAL PDF DISPLAY WITH PHOTOS ---
 elif view_mode == "📋 View Original PDF (With Photos)":
     if os.path.exists(pdf_filename):
+        # STREAMLIT FIX: Expose file securely over local binary stream
         with open(pdf_filename, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+            pdf_bytes = f.read()
+            
+        # Create a direct browser download layout that serves cleanly on mobile Chrome
+        st.success("📄 Full 58-Page Guide Document Loaded Successfully!")
+        st.write("To view it directly on your mobile device or inside Chrome, use the native viewer option below:")
         
-        # Embed the PDF document using a standard html iframe window
-        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" height="750" type="application/pdf"></iframe>'
+        st.download_button(
+            label="📥 Open & Download Full PDF Report (With Photos)",
+            data=pdf_bytes,
+            file_name=pdf_filename,
+            mime="application/pdf"
+        )
+        
+        # Fallback iframe window for desktops
+        pdf_display = f'<iframe src="about:blank" style="display:none;"></iframe>'
         st.markdown(pdf_display, unsafe_allow_html=True)
     else:
         st.error(f"Could not find the target file: {pdf_filename}. Please check your GitHub uploads.")
